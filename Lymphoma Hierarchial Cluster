@@ -1,0 +1,80 @@
+#!/usr/bin/python3/
+import numpy as np
+import sys
+import scipy.spatial.distance
+import scipy.cluster.vq as vq #vq: vector quantization
+import scipy.cluster.hierarchy as hclust
+import re
+np.set_printoptions(threshold=np.inf,precision=2)
+#np.set_printoptions(suppress=True)
+
+#60%
+sd = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 3)
+ss = sd[:,~np.all(np.isnan(sd), axis=0)]
+sd1 = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 3, dtype = str)
+sd2 = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 0, max_rows= 1, dtype = str)
+#print(ss)
+#np.set_printoptions(threshold=np.inf,precision=2)
+
+#70%
+linkmat = hclust.linkage(ss, method='average')
+#print(linkmat)
+
+#80%
+leaf = hclust.leaves_list(linkmat)
+d = ss[leaf]
+#print(d)
+
+#90%
+ll = ss.transpose()
+lll = hclust.linkage(ll, method='average')
+leaf2 = hclust.leaves_list(lll)
+b= d[:,leaf2]
+#print(b)
+
+#95%
+ww = []
+for i in range(len(sd2)):
+    ww.append(sd2[i])
+w = []
+for i in range(len(sd1)):
+    w.append(sd1[i][0])
+www = ww[2:]
+cl = hclust.fcluster(linkmat,t = 20,criterion = 'maxclust')
+cl2 = hclust.fcluster(lll,t = 20,criterion = 'maxclust')
+y = np.where(cl == 1)
+#cl2 = hclust.fcluster(lll,t = 20,criterion = 'maxclust')
+yy = np.where(cl2==1)
+sort_g = []
+for i in y[0]:
+    sort_g.append(w[i])
+
+sor2=[]    
+for i in yy[0]:
+    sor2.append(www[i])
+#print(*sort_g)
+#print(*sor2)
+
+#100%
+a= np.unique(cl, return_counts = True)
+b = np.unique(cl2, return_counts = True)
+maxy = np.where(a[1] == np.max(a[1]))
+valmaxy = a[0][maxy[0]]
+maxy2 = np.where(b[1] == np.max(b[1]))
+valmaxy2 = b[0][maxy2[0]]
+cly2 = np.where(cl == valmaxy[0])
+cly3 = np.where(cl2 == valmaxy2[0] )
+ttyu = []
+for i in cly2[0]:
+    ttyu.append(w[i])
+    
+sor_g2 = []
+for i in cly3[0]:
+    sor_g2.append(www[i])
+ttyu1 = sorted(ttyu)
+sor_g21 = sorted(sor_g2)
+print(np.max(a[1]), *ttyu1)
+
+print(np.max(b[1]), *sor_g21)
+
+
