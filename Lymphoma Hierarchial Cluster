@@ -5,34 +5,36 @@ import scipy.spatial.distance
 import scipy.cluster.vq as vq #vq: vector quantization
 import scipy.cluster.hierarchy as hclust
 import re
+import matplotlib.pylab as plt
 np.set_printoptions(threshold=np.inf,precision=2)
-#np.set_printoptions(suppress=True)
 
-#60%
+
+#Given a res file with N genes and M cell lines, this extracts data into an NxM array
 sd = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 3)
 ss = sd[:,~np.all(np.isnan(sd), axis=0)]
 sd1 = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 3, dtype = str)
 sd2 = np.genfromtxt(sys.argv[1],delimiter='\t',skip_header = 0, max_rows= 1, dtype = str)
-#print(ss)
-#np.set_printoptions(threshold=np.inf,precision=2)
+print(ss)
 
-#70%
-linkmat = hclust.linkage(ss, method='average')
-#print(linkmat)
 
-#80%
+#Cluster the rows of this matrix using scipy.cluster.hierarchy with the average linkage method
+linkmat = hclust.linkage(ss, method='average') 
+print(linkmat) #prints Z- Linkage matrix
+
+#Reorder the rows of this matrix according to the leaf order of the clustering and prints out the reordered matrix
 leaf = hclust.leaves_list(linkmat)
 d = ss[leaf]
-#print(d)
+print(d)
 
-#90%
+#cluster the columns and print the data matrix where both the rows and columns have been 
+       #reordered with respect to the leaf order of both clusterings
 ll = ss.transpose()
 lll = hclust.linkage(ll, method='average')
 leaf2 = hclust.leaves_list(lll)
 b= d[:,leaf2]
-#print(b)
+print(b)
 
-#95%
+#Use fcluster with the maxclust criterion to identify 20 distinct clusters for both the rows (genes) and columns (cell lines)
 ww = []
 for i in range(len(sd2)):
     ww.append(sd2[i])
@@ -52,10 +54,10 @@ for i in y[0]:
 sor2=[]    
 for i in yy[0]:
     sor2.append(www[i])
-#print(*sort_g)
-#print(*sor2)
+print(*sort_g) #asterisk just keeps it on the same line
+print(*sor2)
 
-#100%
+#Identify the largest cluster of the 20 clusters identified above and print out its size and sorted contents for both genes and cell lines
 a= np.unique(cl, return_counts = True)
 b = np.unique(cl2, return_counts = True)
 maxy = np.where(a[1] == np.max(a[1]))
@@ -75,6 +77,39 @@ ttyu1 = sorted(ttyu)
 sor_g21 = sorted(sor_g2)
 print(np.max(a[1]), *ttyu1)
 
+#Print out a clustered linkage matrix
+fig = plt.figure(figsize=(8,8))
+ax1 = fig.add_axes([0.09,0.1,0.2,0.6])
+z1 = hclust.dendrogram(Z1,orientation='left',labels=names[l1])
+ax1.set_xticks([])
+ax1.set_yticks([])
+
+# Compute and plot second dendrogram.
+ax2 = fig.add_axes([0.3,0.71,0.6,0.15])
+z2 = hclust.dendrogram(Z2,labels=cells[l2])
+ax2.set_xticks([])
+ax2.set_yticks([])
+
+
+# Plot distance matrix.
+axmatrix = fig.add_axes([0.3,0.1,0.6,0.6])
+im = axmatrix.matshow(D, aspect='auto', origin='lower')
+
+axmatrix.set_xticks([])
+axmatrix.set_xticks(range(len(cells)))
+axmatrix.set_xticklabels(cells[l2],fontsize=2,rotation='vertical')
+axmatrix.xaxis.set_tick_params(pad=95)
+
+axmatrix.set_yticks(range(len(names)))
+axmatrix.yaxis.tick_right()
+axmatrix.set_yticklabels(names[l1],fontsize=5)
+
+fig.subplots_adjust(bottom=0.1)
+axcolor = fig.add_axes([0.3,0.07,0.6,0.02])
+fig.colorbar(im,cax=axcolor,orientation='horizontal')
+plt.savefig(sys.argv[3],dpi=600)
 print(np.max(b[1]), *sor_g21)
+
+
 
 
